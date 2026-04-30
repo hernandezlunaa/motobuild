@@ -11,3 +11,5 @@ public class MotobuildApplication {
     }
 
 }
+
+// http://localhost:8080/motorcycles

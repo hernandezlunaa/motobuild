@@ -95,3 +95,117 @@ VALUES (1, 2, 'A full exhaust system replaces the slip-on exhaust setup.'),
 
 select *
 from part_conflicts;
+
+-- UPDATES
+
+ALTER TABLE motorcycles
+    ADD COLUMN image_url VARCHAR(255);
+
+UPDATE motorcycles
+SET image_url = 'r6.jpg'
+WHERE make = 'Yamaha';
+
+UPDATE motorcycles
+SET image_url = 'ninja400.jpg'
+WHERE make = 'Kawasaki';
+
+UPDATE motorcycles
+SET image_url = 'cbr600rr.jpg'
+WHERE make = 'Honda';
+
+
+ALTER TABLE parts
+    ADD COLUMN image_url VARCHAR(255);
+
+UPDATE parts
+SET image_url = 'akrapovic-full-exhaust.jpg'
+WHERE part_id = 1;
+UPDATE parts
+SET image_url = 'slip-on-exhaust-yoshimura.png'
+WHERE part_id = 2;
+UPDATE parts
+SET image_url = 'carbon-exhaust-heat-shield-akrapovic.png'
+WHERE part_id = 3;
+UPDATE parts
+SET image_url = 'mid-pipe-link-m4.png'
+WHERE part_id = 4;
+UPDATE parts
+SET image_url = 'ecu-flash-tune-dynojet.png'
+WHERE part_id = 5;
+UPDATE parts
+SET image_url = 'power-commander-v-dynojet.png'
+WHERE part_id = 6;
+UPDATE parts
+SET image_url = 'quickshifter-dynojet.png'
+WHERE part_id = 7;
+UPDATE parts
+SET image_url = 'auto-blipper-kit-woolich-racing.png'
+WHERE part_id = 8;
+UPDATE parts
+SET image_url = 'adjustable-rearsets-woodcraft.png'
+WHERE part_id = 9;
+UPDATE parts
+SET image_url = 'clip-on-handlebars-vortex.png'
+WHERE part_id = 10;
+UPDATE parts
+SET image_url = 'shorty-levers-asv.png'
+WHERE part_id = 11;
+UPDATE parts
+SET image_url = 'tank-grips-stompgrip.png'
+WHERE part_id = 12;
+UPDATE parts
+SET image_url = 'race-fairing-kit-hotbodies.png'
+WHERE part_id = 13;
+UPDATE parts
+SET image_url = 'fairing-stay-woodcraft.png'
+WHERE part_id = 14;
+UPDATE parts
+SET image_url = 'double-bubble-windscreen-puig.jpg'
+WHERE part_id = 15;
+UPDATE parts
+SET image_url = 'frame-sliders-shogun.png'
+WHERE part_id = 16;
+UPDATE parts
+SET image_url = 'performance-brake-pads-brembo.png'
+WHERE part_id = 17;
+UPDATE parts
+SET image_url = 'steel-braided-brake-lines-galfer.png'
+WHERE part_id = 18;
+UPDATE parts
+SET image_url = 'front-brake-rotors-ebc.png'
+WHERE part_id = 19;
+UPDATE parts
+SET image_url = 'brembo-master-cylinder-brembo.png'
+WHERE part_id = 20;
+UPDATE parts
+SET image_url = 'rear-shock-ohlins.png'
+WHERE part_id = 21;
+UPDATE parts
+SET image_url = 'fork-cartridge-kit-ohlins.png'
+WHERE part_id = 22;
+UPDATE parts
+SET image_url = 'steering-damper-ohlins.png'
+WHERE part_id = 23;
+UPDATE parts
+SET image_url = '520-chain-conversion-kit-did.png'
+WHERE part_id = 24;
+UPDATE parts
+SET image_url = 'aluminum-rear-sprocket-vortex.png'
+WHERE part_id = 25;
+UPDATE parts
+SET image_url = 'heavy-duty-clutch-kit-barnett.png'
+WHERE part_id = 26;
+UPDATE parts
+SET image_url = 'led-turn-signals-tst-industries.png'
+WHERE part_id = 27;
+UPDATE parts
+SET image_url = 'integrated-tail-light-tst-industries.png'
+WHERE part_id = 28;
+UPDATE parts
+SET image_url = 'fender-eliminator-kit-tst-industries.png'
+WHERE part_id = 29;
+UPDATE parts
+SET image_url = 'led-headlight-bulb-cyclops.png'
+WHERE part_id = 30;
+
+
