@@ -1,0 +1,246 @@
+/* =========================
+   MotoBuild Global Theme
+   ========================= */
+
+:root {
+    --motobuild-dark-bg: rgb(18, 18, 18);
+    --motobuild-dark-box: rgb(29, 29, 29);
+
+    /* Dark mode purple: softer, lower contrast */
+    --motobuild-purple-dark: #8f73c9;
+    --motobuild-purple-dark-hover: #a891d8;
+
+    /* Light mode purple: brighter and easier to see */
+    --motobuild-purple-light: #7b3fe4;
+    --motobuild-purple-light-hover: #6931c7;
+}
+
+/* =========================
+   Body Background
+   ========================= */
+
+html[data-bs-theme="dark"],
+html[data-bs-theme="dark"] body {
+    background-color: var(--motobuild-dark-bg) !important;
+    color: #e8e8e8;
+}
+
+html[data-bs-theme="light"] body {
+    background-color: #f8f9fa;
+}
+
+/* =========================
+   Cards / Boxes
+   ========================= */
+
+html[data-bs-theme="dark"] .card,
+html[data-bs-theme="dark"] .card-body,
+html[data-bs-theme="dark"] .list-group-item,
+html[data-bs-theme="dark"] .dropdown-menu,
+html[data-bs-theme="dark"] .modal-content {
+    background-color: var(--motobuild-dark-box) !important;
+    color: #e8e8e8 !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+html[data-bs-theme="dark"] .shadow-sm {
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35) !important;
+}
+
+.card {
+    overflow: hidden;
+}
+
+.card-body {
+    border-radius: inherit;
+}
+
+/* =========================
+   Filter Inputs / Form Boxes
+   ========================= */
+
+html[data-bs-theme="dark"] .form-control,
+html[data-bs-theme="dark"] .form-select,
+html[data-bs-theme="dark"] textarea {
+    background-color: var(--motobuild-dark-box) !important;
+    color: #e8e8e8 !important;
+    border-color: rgba(255, 255, 255, 0.16) !important;
+}
+
+html[data-bs-theme="dark"] .form-control::placeholder {
+    color: rgba(255, 255, 255, 0.45) !important;
+}
+
+html[data-bs-theme="dark"] .form-label {
+    color: #e8e8e8;
+}
+
+/* =========================
+   Navbar
+   ========================= */
+
+html[data-bs-theme="dark"] .navbar {
+    background-color: var(--motobuild-dark-box) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+html[data-bs-theme="light"] .navbar {
+    background-color: #212529 !important;
+}
+
+/* =========================
+   Purple Branding
+   ========================= */
+
+html[data-bs-theme="dark"] .motobuild-title,
+html[data-bs-theme="dark"] .navbar-brand {
+    color: var(--motobuild-purple-dark) !important;
+}
+
+html[data-bs-theme="light"] .motobuild-title,
+html[data-bs-theme="light"] .navbar-brand {
+    color: var(--motobuild-purple-light) !important;
+}
+
+html[data-bs-theme="dark"] .navbar-brand:hover {
+    color: var(--motobuild-purple-dark-hover) !important;
+}
+
+html[data-bs-theme="light"] .navbar-brand:hover {
+    color: var(--motobuild-purple-light-hover) !important;
+}
+
+/* =========================
+   MotoBuild Purple Buttons
+   Only use these classes when you actually want a purple button.
+   Normal btn-primary stays blue.
+   Normal btn-success stays green.
+   ========================= */
+
+html[data-bs-theme="dark"] .btn-motobuild-purple {
+    background-color: var(--motobuild-purple-dark) !important;
+    border-color: var(--motobuild-purple-dark) !important;
+    color: white !important;
+}
+
+html[data-bs-theme="dark"] .btn-motobuild-purple:hover {
+    background-color: var(--motobuild-purple-dark-hover) !important;
+    border-color: var(--motobuild-purple-dark-hover) !important;
+    color: white !important;
+}
+
+html[data-bs-theme="light"] .btn-motobuild-purple {
+    background-color: var(--motobuild-purple-light) !important;
+    border-color: var(--motobuild-purple-light) !important;
+    color: white !important;
+}
+
+html[data-bs-theme="light"] .btn-motobuild-purple:hover {
+    background-color: var(--motobuild-purple-light-hover) !important;
+    border-color: var(--motobuild-purple-light-hover) !important;
+    color: white !important;
+}
+
+html[data-bs-theme="dark"] .btn-outline-motobuild-purple {
+    color: var(--motobuild-purple-dark) !important;
+    border-color: var(--motobuild-purple-dark) !important;
+}
+
+html[data-bs-theme="dark"] .btn-outline-motobuild-purple:hover {
+    background-color: var(--motobuild-purple-dark) !important;
+    color: white !important;
+}
+
+html[data-bs-theme="light"] .btn-outline-motobuild-purple {
+    color: var(--motobuild-purple-light) !important;
+    border-color: var(--motobuild-purple-light) !important;
+}
+
+html[data-bs-theme="light"] .btn-outline-motobuild-purple:hover {
+    background-color: var(--motobuild-purple-light) !important;
+    color: white !important;
+}
+
+/* =========================
+   Tables
+   ========================= */
+
+html[data-bs-theme="dark"] .table {
+    --bs-table-bg: var(--motobuild-dark-box);
+    --bs-table-color: #e8e8e8;
+    --bs-table-striped-bg: rgb(34, 34, 34);
+    --bs-table-striped-color: #e8e8e8;
+    --bs-table-border-color: rgba(255, 255, 255, 0.1);
+}
+
+html[data-bs-theme="dark"] .table-dark {
+    --bs-table-bg: rgb(38, 38, 38);
+    --bs-table-color: #ffffff;
+}
+
+/* =========================
+   Alerts
+   ========================= */
+
+html[data-bs-theme="dark"] .alert-info {
+    background-color: rgba(13, 110, 253, 0.18) !important;
+    color: #cfe2ff !important;
+    border-color: rgba(13, 110, 253, 0.45) !important;
+}
+
+html[data-bs-theme="dark"] .alert-warning {
+    background-color: rgb(43, 36, 18) !important;
+    color: #ffe9a8 !important;
+    border-color: rgba(255, 193, 7, 0.35) !important;
+}
+
+html[data-bs-theme="dark"] .alert-success {
+    background-color: rgb(20, 45, 34) !important;
+    color: #bff5d5 !important;
+    border-color: rgba(25, 135, 84, 0.35) !important;
+}
+
+/* =========================
+   Theme Toggle
+   ========================= */
+
+html[data-bs-theme="light"] .theme-toggle-btn {
+    background-color: rgb(242, 242, 230) !important;
+    border: 1px solid rgba(0, 0, 0, 0.12) !important;
+}
+
+html[data-bs-theme="dark"] .theme-toggle-btn {
+    background-color: rgb(45, 45, 45) !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+}
+
+/* =========================
+   Added Part Button
+   ========================= */
+
+.added-part-btn {
+    background-color: #6c757d !important;
+    border: 1px solid #6c757d !important;
+    color: white !important;
+    opacity: 0.82;
+    transition: all 0.2s ease;
+}
+
+.added-part-btn .remove-label {
+    display: none;
+}
+
+.added-part-btn:hover {
+    background-color: transparent !important;
+    border-color: #dc3545 !important;
+    color: #dc3545 !important;
+    opacity: 1;
+}
+
+.added-part-btn:hover .added-label {
+    display: none;
+}
+
+.added-part-btn:hover .remove-label {
+    display: inline;
+}

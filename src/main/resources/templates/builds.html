@@ -1,10 +1,383 @@
 <!DOCTYPE html>
-<html lang="en">
+<html xmlns:th="http://www.thymeleaf.org" data-bs-theme="light">
 <head>
-    <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Builds - MotoBuild</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/motobuild-theme.css?v=2">
+
+    <style>
+        .build-card {
+            border-radius: 16px;
+            overflow: visible;
+            position: relative;
+        }
+
+        .create-build-card {
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .build-action-area {
+            min-width: 145px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 8px;
+        }
+
+        .build-menu-wrapper {
+            position: relative;
+        }
+
+        .build-menu-wrapper summary {
+            list-style: none;
+        }
+
+        .build-menu-wrapper summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .kebab-btn {
+            width: 38px;
+            height: 34px;
+            border-radius: 8px;
+            font-size: 22px;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding-bottom: 4px;
+        }
+
+        .build-menu-panel {
+            position: absolute;
+            right: 0;
+            top: 42px;
+            width: 285px;
+            border-radius: 14px;
+            padding: 14px;
+            background-color: var(--bs-body-bg);
+            border: 1px solid rgba(143, 115, 201, 0.25);
+            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+            z-index: 1000;
+        }
+
+        html[data-bs-theme="dark"] .build-menu-panel {
+            background-color: rgb(29, 29, 29);
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+
+        .delete-build-btn.confirm-delete {
+            background-color: #dc3545 !important;
+            border-color: #dc3545 !important;
+            color: white !important;
+        }
+
+        .theme-toggle-btn {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            width: 54px;
+            height: 54px;
+            border-radius: 50%;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            z-index: 9999;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.25s ease;
+        }
+
+        .theme-toggle-btn:hover {
+            transform: scale(1.08) rotate(8deg);
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+        }
+
+        .theme-toggle-icon {
+            width: 30px;
+            height: 30px;
+            object-fit: contain;
+        }
+
+        .theme-icon-animate {
+            animation: themeIconSpin 0.35s ease;
+        }
+
+        @keyframes themeIconSpin {
+            0% {
+                opacity: 0;
+                transform: rotate(-120deg) scale(0.5);
+            }
+
+            100% {
+                opacity: 1;
+                transform: rotate(0deg) scale(1);
+            }
+        }
+
+        .flash-message {
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+
+        .flash-message.fade-out {
+            opacity: 0;
+        transform: translateY(-8px);
+        }
+    </style>
 </head>
+
 <body>
 
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand fw-bold" href="/">MotoBuild</a>
+
+        <div class="d-flex gap-2">
+            <a class="btn btn-outline-light btn-sm" href="/motorcycles">Motorcycles</a>
+            <a class="btn btn-outline-light btn-sm" href="/parts">Parts</a>
+            <a class="btn btn-light btn-sm" href="/builds">Builds</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-5 mb-5">
+    <div th:if="${successMessage}"
+         id="successFlashMessage"
+         class="alert alert-success shadow-sm flash-message"
+         th:text="${successMessage}">
+    </div>
+
+    <div th:if="${deletedBuildMessage}"
+         id="undoDeleteMessage"
+         class="alert alert-warning shadow-sm flash-message d-flex justify-content-between align-items-center gap-3 flex-wrap">
+        <span th:text="${deletedBuildMessage}"></span>
+
+        <form method="post" action="/builds/undo-delete">
+            <button type="submit" class="btn btn-sm btn-warning fw-semibold">
+                Undo
+            </button>
+        </form>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-5">
+            <div class="card create-build-card shadow-sm">
+                <div class="card-body">
+                    <h2 class="fw-bold motobuild-title">Create Build</h2>
+                    <p class="text-body-secondary">
+                        Pick a motorcycle and name the build.
+                    </p>
+
+                    <form method="post" action="/builds">
+                        <div class="mb-3">
+                            <label class="form-label">Build Name</label>
+                            <input type="text"
+                                   class="form-control"
+                                   name="buildName"
+                                   placeholder="R6 Track Build"
+                                   required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Motorcycle</label>
+                            <select class="form-select" name="motorcycleId" required>
+                                <option value="">Choose a motorcycle</option>
+                                <option th:each="motorcycle : ${motorcycles}"
+                                        th:value="${motorcycle.motorcycleId}"
+                                        th:text="${motorcycle.year + ' ' + motorcycle.make + ' ' + motorcycle.model}">
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control"
+                                      name="description"
+                                      rows="3"
+                                      placeholder="Short notes about this build"></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-motobuild-purple w-100">
+                            Create Build
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card create-build-card shadow-sm mt-4">
+                <div class="card-body">
+                    <h5 class="fw-bold mb-2">Build Tips</h5>
+                    <p class="text-body-secondary mb-2">
+                        Create a build first, then go to the parts catalog to add parts.
+                    </p>
+                    <p class="text-body-secondary mb-0">
+                        MotoBuild will show warnings for compatibility, required parts, and conflicts.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-7">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-3">
+                <div>
+                    <h1 class="fw-bold motobuild-title mb-0">My Builds</h1>
+                    <p class="text-body-secondary mb-0">
+                        Current test user builds.
+                    </p>
+                </div>
+
+                <a href="/parts" class="btn btn-outline-motobuild-purple">
+                    Browse Parts
+                </a>
+            </div>
+
+            <div th:if="${#lists.isEmpty(builds)}" class="alert alert-info">
+                No builds yet. Create your first build on the left.
+            </div>
+
+            <div class="card build-card shadow-sm mb-3" th:each="build : ${builds}">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+                        <div>
+                            <h4 class="fw-bold mb-1" th:text="${build.buildName}"></h4>
+
+                            <p class="text-body-secondary mb-1">
+                                <span th:text="${build.motorcycle.year}"></span>
+                                <span th:text="${build.motorcycle.make}"></span>
+                                <span th:text="${build.motorcycle.model}"></span>
+                            </p>
+
+                            <p class="mb-0"
+                               th:if="${build.description != null && !#strings.isEmpty(build.description)}"
+                               th:text="${build.description}">
+                            </p>
+                        </div>
+
+                        <div class="build-action-area">
+                            <a th:href="@{/builds/{id}(id=${build.buildId})}"
+                               class="btn btn-motobuild-purple">
+                                View Build
+                            </a>
+
+                            <details class="build-menu-wrapper">
+                                <summary class="btn btn-outline-secondary kebab-btn" title="Build options">
+                                    ⋮
+                                </summary>
+
+                                <div class="build-menu-panel">
+                                    <h6 class="fw-bold mb-3">Build Options</h6>
+
+                                    <form th:action="@{/builds/{id}/update-name(id=${build.buildId})}"
+                                          method="post"
+                                          class="mb-3">
+                                        <label class="form-label small">Change Build Name</label>
+                                        <input type="text"
+                                               name="buildName"
+                                               class="form-control form-control-sm mb-2"
+                                               th:value="${build.buildName}"
+                                               required>
+                                        <button type="submit" class="btn btn-sm btn-outline-primary w-100">
+                                            Save Name
+                                        </button>
+                                    </form>
+
+                                    <form th:action="@{/builds/{id}/update-motorcycle(id=${build.buildId})}"
+                                          method="post"
+                                          class="mb-3">
+                                        <label class="form-label small">Change Motorcycle</label>
+                                        <select name="motorcycleId" class="form-select form-select-sm mb-2" required>
+                                            <option th:each="motorcycle : ${motorcycles}"
+                                                    th:value="${motorcycle.motorcycleId}"
+                                                    th:text="${motorcycle.year + ' ' + motorcycle.make + ' ' + motorcycle.model}"
+                                                    th:selected="${build.motorcycle.motorcycleId == motorcycle.motorcycleId}">
+                                            </option>
+                                        </select>
+
+                                        <button type="submit" class="btn btn-sm btn-outline-primary w-100">
+                                            Save Bike
+                                        </button>
+                                    </form>
+
+                                    <form th:action="@{/builds/{id}/delete(id=${build.buildId})}"
+                                          method="post"
+                                          class="delete-build-form">
+                                        <button type="submit"
+                                                class="btn btn-sm btn-outline-danger w-100 delete-build-btn">
+                                            Delete Build
+                                        </button>
+                                    </form>
+                                </div>
+                            </details>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<button id="themeToggle" class="theme-toggle-btn" type="button">
+    <img id="themeIcon" class="theme-toggle-icon" src="/images/ui/moon.png" alt="Switch theme">
+</button>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+
+        const successFlashMessage = document.getElementById("successFlashMessage");
+        const undoDeleteMessage = document.getElementById("undoDeleteMessage");
+
+        if (successFlashMessage) {
+            setTimeout(() => {
+                successFlashMessage.classList.add("fade-out");
+
+                setTimeout(() => {
+                    successFlashMessage.remove();
+                }, 600);
+            }, 3000);
+        }
+
+        if (undoDeleteMessage) {
+            setTimeout(() => {
+                undoDeleteMessage.classList.add("fade-out");
+
+                setTimeout(() => {
+                    undoDeleteMessage.remove();
+                }, 600);
+            }, 6000);
+        }
+
+        const deleteButtons = document.querySelectorAll(".delete-build-btn");
+
+        deleteButtons.forEach((button) => {
+            button.addEventListener("click", (event) => {
+                if (!button.classList.contains("confirm-delete")) {
+                    event.preventDefault();
+
+                    button.classList.add("confirm-delete");
+                    button.textContent = "Are you sure? Click again";
+
+                    setTimeout(() => {
+                        button.classList.remove("confirm-delete");
+                        button.textContent = "Delete Build";
+                    }, 4000);
+                }
+            });
+        });
+
+        document.addEventListener("click", (event) => {
+            const openMenus = document.querySelectorAll(".build-menu-wrapper[open]");
+
+            openMenus.forEach((menu) => {
+                if (!menu.contains(event.target)) {
+                    menu.removeAttribute("open");
+                }
+            });
+        });
+    });
+</script>
+
+<script src="/js/theme.js?v=2"></script>
 </body>
 </html>
