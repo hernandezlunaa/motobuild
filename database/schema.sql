@@ -1,15 +1,13 @@
-CREATE
-DATABASE IF NOT EXISTS motobuild;
-USE
-motobuild;
+CREATE DATABASE IF NOT EXISTS motobuild;
+USE motobuild;
 
 DROP TABLE IF EXISTS part_conflicts;
 DROP TABLE IF EXISTS part_dependencies;
 DROP TABLE IF EXISTS bike_part_compatibility;
 DROP TABLE IF EXISTS build_parts;
+DROP TABLE IF EXISTS builds;
 DROP TABLE IF EXISTS parts;
 DROP TABLE IF EXISTS part_categories;
-DROP TABLE IF EXISTS builds;
 DROP TABLE IF EXISTS motorcycles;
 DROP TABLE IF EXISTS users;
 
@@ -26,12 +24,38 @@ CREATE TABLE users
 CREATE TABLE motorcycles
 (
     motorcycle_id INT AUTO_INCREMENT PRIMARY KEY,
-    make          VARCHAR(50) NOT NULL,
-    model         VARCHAR(80) NOT NULL,
-    year          INT         NOT NULL,
+    make          VARCHAR(50)  NOT NULL,
+    model         VARCHAR(80)  NOT NULL,
+    year          INT          NOT NULL,
     engine_cc     INT,
     bike_type     VARCHAR(50),
+    image_url     VARCHAR(255),
     UNIQUE (make, model, year)
+);
+
+CREATE TABLE part_categories
+(
+    category_id   INT AUTO_INCREMENT PRIMARY KEY,
+    category_name VARCHAR(75) NOT NULL UNIQUE,
+    description   TEXT
+);
+
+CREATE TABLE parts
+(
+    part_id            INT AUTO_INCREMENT PRIMARY KEY,
+    category_id        INT            NOT NULL,
+    part_name          VARCHAR(120)   NOT NULL,
+    brand              VARCHAR(80)    NOT NULL,
+    part_number        VARCHAR(80),
+    description        TEXT,
+    price              DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+    install_difficulty ENUM('Easy', 'Medium', 'Hard') DEFAULT 'Medium',
+    image_url          VARCHAR(255),
+
+    CONSTRAINT fk_part_category
+        FOREIGN KEY (category_id)
+            REFERENCES part_categories (category_id)
+            ON DELETE RESTRICT
 );
 
 CREATE TABLE builds
@@ -55,30 +79,6 @@ CREATE TABLE builds
             ON DELETE RESTRICT
 );
 
-CREATE TABLE part_categories
-(
-    category_id   INT AUTO_INCREMENT PRIMARY KEY,
-    category_name VARCHAR(75) NOT NULL UNIQUE,
-    description   TEXT
-);
-
-CREATE TABLE parts
-(
-    part_id            INT AUTO_INCREMENT PRIMARY KEY,
-    category_id        INT            NOT NULL,
-    part_name          VARCHAR(120)   NOT NULL,
-    brand              VARCHAR(80)    NOT NULL,
-    part_number        VARCHAR(80),
-    description        TEXT,
-    price              DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
-    install_difficulty ENUM('Easy', 'Medium', 'Hard') DEFAULT 'Medium',
-
-    CONSTRAINT fk_part_category
-        FOREIGN KEY (category_id)
-            REFERENCES part_categories (category_id)
-            ON DELETE RESTRICT
-);
-
 CREATE TABLE build_parts
 (
     build_part_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -88,7 +88,7 @@ CREATE TABLE build_parts
     quantity      INT NOT NULL DEFAULT 1,
     custom_price  DECIMAL(10, 2),
     notes         TEXT,
-    added_at      TIMESTAMP    DEFAULT CURRENT_TIMESTAMP,
+    added_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT fk_build_part_build
         FOREIGN KEY (build_id)
@@ -175,3 +175,11 @@ CREATE TABLE part_conflicts
     CONSTRAINT chk_no_self_conflict
         CHECK (part_id <> conflicting_part_id)
 );
+
+CREATE INDEX idx_parts_category ON parts (category_id);
+CREATE INDEX idx_builds_user ON builds (user_id);
+CREATE INDEX idx_builds_motorcycle ON builds (motorcycle_id);
+CREATE INDEX idx_build_parts_build ON build_parts (build_id);
+CREATE INDEX idx_build_parts_part ON build_parts (part_id);
+CREATE INDEX idx_compat_motorcycle ON bike_part_compatibility (motorcycle_id);
+CREATE INDEX idx_compat_part ON bike_part_compatibility (part_id);
