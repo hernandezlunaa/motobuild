@@ -26,9 +26,10 @@ public class BuildController {
     }
 
     @GetMapping("/builds")
-    public String showBuilds(Model model) {
+    public String showBuilds(@RequestParam(required = false) Integer motorcycleId, Model model) {
         model.addAttribute("builds", buildService.getBuildsForDefaultUser());
         model.addAttribute("motorcycles", motorcycleRepository.findAll());
+        model.addAttribute("selectedMotorcycleId", motorcycleId);
         return "builds";
     }
 

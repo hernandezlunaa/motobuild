@@ -326,23 +326,25 @@ public class BuildService {
             Integer partId = part.getPartId();
             Integer motorcycleId = build.getMotorcycle().getMotorcycleId();
 
-            Integer compatibleCount = jdbcTemplate.queryForObject(
+            List<String> incompatibilityReasons = jdbcTemplate.queryForList(
                     """
-                    SELECT COUNT(*)
-                    FROM bike_part_compatibility
+                    SELECT reason
+                    FROM bike_part_incompatibility
                     WHERE motorcycle_id = ?
                     AND part_id = ?
                     """,
-                    Integer.class,
+                    String.class,
                     motorcycleId,
                     partId
             );
 
-            if (compatibleCount == null || compatibleCount == 0) {
+            if (!incompatibilityReasons.isEmpty()) {
+                String reason = incompatibilityReasons.get(0);
+
                 addWarningIfNew(
                         warnings,
                         new BuildWarning(
-                                part.getPartName() + " may not be compatible with this motorcycle.",
+                                part.getPartName() + " is not compatible with this motorcycle. " + reason,
                                 new ArrayList<>(),
                                 buildPart.getBuildPartId(),
                                 "Remove " + part.getPartName()

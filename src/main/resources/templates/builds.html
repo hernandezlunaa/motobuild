@@ -186,7 +186,8 @@
                                 <option value="">Choose a motorcycle</option>
                                 <option th:each="motorcycle : ${motorcycles}"
                                         th:value="${motorcycle.motorcycleId}"
-                                        th:text="${motorcycle.year + ' ' + motorcycle.make + ' ' + motorcycle.model}">
+                                        th:text="${motorcycle.year + ' ' + motorcycle.make + ' ' + motorcycle.model}"
+                                        th:selected="${selectedMotorcycleId != null && selectedMotorcycleId == motorcycle.motorcycleId}">
                                 </option>
                             </select>
                         </div>
