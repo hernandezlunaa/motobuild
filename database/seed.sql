@@ -62,20 +62,6 @@ VALUES
     (8, 'Fender Eliminator Kit', 'TST Industries', 'TST-FE-01', 'Tidy tail fender eliminator kit', 119.99, 'Easy', 'fender-eliminator-kit-tst-industries.png'),
     (8, 'LED Headlight Bulbs', 'Cyclops', 'CYC-HEAD-01', 'Bright LED headlight bulb upgrade', 99.99, 'Easy', 'led-headlight-bulb-cyclops.png');
 
-INSERT INTO build_parts (build_id, part_id, status, quantity, notes)
-VALUES
-    (1, 1, 'planned', 1, 'Full exhaust planned for track setup.'),
-    (1, 5, 'planned', 1, 'Tune option selected for exhaust setup.'),
-    (1, 9, 'installed', 1, 'Rearsets already installed.'),
-    (1, 12, 'installed', 1, 'Tank grips already installed.'),
-    (1, 17, 'planned', 1, 'Brake pad upgrade.'),
-    (1, 21, 'planned', 1, 'Rear shock upgrade.'),
-
-    (2, 2, 'planned', 1, 'Slip-on exhaust for sound.'),
-    (2, 11, 'planned', 1, 'Short levers.'),
-    (2, 16, 'planned', 1, 'Crash protection.'),
-    (2, 27, 'planned', 1, 'LED signal upgrade.');
-
 INSERT INTO bike_part_incompatibility (motorcycle_id, part_id, reason)
 VALUES
 -- Kawasaki Ninja 400
