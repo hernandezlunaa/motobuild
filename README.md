@@ -98,7 +98,7 @@ spring.datasource.password=your_password_here
 7. Open the app in your browser:
 
 ```text
-http://localhost:8080
+http://localhost:8080/login
 ```
 
 8. Log in with the test user if you ran `test.sql`:
