@@ -12,4 +12,4 @@ public class MotobuildApplication {
 
 }
 
-// http://localhost:8080/motorcycles
+// http://localhost:8080/login
