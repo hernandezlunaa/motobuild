@@ -3,12 +3,13 @@ USE motobuild;
 
 DROP TABLE IF EXISTS part_conflicts;
 DROP TABLE IF EXISTS part_dependencies;
-DROP TABLE IF EXISTS bike_part_compatibility;
+DROP TABLE IF EXISTS bike_part_incompatibility;
 DROP TABLE IF EXISTS build_parts;
 DROP TABLE IF EXISTS builds;
 DROP TABLE IF EXISTS parts;
 DROP TABLE IF EXISTS part_categories;
 DROP TABLE IF EXISTS motorcycles;
+DROP TABLE IF EXISTS account_activity;
 DROP TABLE IF EXISTS users;
 
 CREATE TABLE users
@@ -19,6 +20,20 @@ CREATE TABLE users
     email         VARCHAR(100) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
     created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE account_activity
+(
+    activity_id      INT AUTO_INCREMENT PRIMARY KEY,
+    user_id          INT NOT NULL,
+    activity_type    VARCHAR(50) NOT NULL,
+    activity_message VARCHAR(255) NOT NULL,
+    created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_activity_user
+        FOREIGN KEY (user_id)
+            REFERENCES users (user_id)
+            ON DELETE CASCADE
 );
 
 CREATE TABLE motorcycles
@@ -107,24 +122,24 @@ CREATE TABLE build_parts
         CHECK (quantity > 0)
 );
 
-CREATE TABLE bike_part_compatibility
+CREATE TABLE bike_part_incompatibility
 (
-    compatibility_id INT AUTO_INCREMENT PRIMARY KEY,
-    motorcycle_id    INT NOT NULL,
-    part_id          INT NOT NULL,
-    notes            TEXT,
+    incompatibility_id INT AUTO_INCREMENT PRIMARY KEY,
+    motorcycle_id      INT NOT NULL,
+    part_id            INT NOT NULL,
+    reason             TEXT,
 
-    CONSTRAINT fk_compat_motorcycle
+    CONSTRAINT fk_incompat_motorcycle
         FOREIGN KEY (motorcycle_id)
             REFERENCES motorcycles (motorcycle_id)
             ON DELETE CASCADE,
 
-    CONSTRAINT fk_compat_part
+    CONSTRAINT fk_incompat_part
         FOREIGN KEY (part_id)
             REFERENCES parts (part_id)
             ON DELETE CASCADE,
 
-    CONSTRAINT uq_bike_part_compatibility
+    CONSTRAINT uq_bike_part_incompatibility
         UNIQUE (motorcycle_id, part_id)
 );
 
@@ -133,6 +148,7 @@ CREATE TABLE part_dependencies
     dependency_id    INT AUTO_INCREMENT PRIMARY KEY,
     part_id          INT NOT NULL,
     required_part_id INT NOT NULL,
+    dependency_group VARCHAR(80) NOT NULL DEFAULT 'default',
     notes            TEXT,
 
     CONSTRAINT fk_dependency_part
@@ -176,10 +192,71 @@ CREATE TABLE part_conflicts
         CHECK (part_id <> conflicting_part_id)
 );
 
+CREATE INDEX idx_activity_user ON account_activity (user_id);
+CREATE INDEX idx_activity_created_at ON account_activity (created_at);
+
 CREATE INDEX idx_parts_category ON parts (category_id);
 CREATE INDEX idx_builds_user ON builds (user_id);
 CREATE INDEX idx_builds_motorcycle ON builds (motorcycle_id);
 CREATE INDEX idx_build_parts_build ON build_parts (build_id);
 CREATE INDEX idx_build_parts_part ON build_parts (part_id);
-CREATE INDEX idx_compat_motorcycle ON bike_part_compatibility (motorcycle_id);
-CREATE INDEX idx_compat_part ON bike_part_compatibility (part_id);
+CREATE INDEX idx_incompat_motorcycle ON bike_part_incompatibility (motorcycle_id);
+CREATE INDEX idx_incompat_part ON bike_part_incompatibility (part_id);
+CREATE INDEX idx_dependency_part ON part_dependencies (part_id);
+CREATE INDEX idx_dependency_required_part ON part_dependencies (required_part_id);
+CREATE INDEX idx_conflict_part ON part_conflicts (part_id);
+CREATE INDEX idx_conflict_conflicting_part ON part_conflicts (conflicting_part_id);
+
+CREATE TRIGGER trg_user_created
+    AFTER INSERT ON users
+    FOR EACH ROW
+    INSERT INTO account_activity (user_id, activity_type, activity_message)
+    VALUES (
+               NEW.user_id,
+               'ACCOUNT_CREATED',
+               CONCAT('Account created for ', NEW.first_name, ' ', NEW.last_name)
+           );
+
+CREATE TRIGGER trg_build_created
+    AFTER INSERT ON builds
+    FOR EACH ROW
+    INSERT INTO account_activity (user_id, activity_type, activity_message)
+    VALUES (
+               NEW.user_id,
+               'BUILD_CREATED',
+               CONCAT('Created build: ', NEW.build_name)
+           );
+
+CREATE TRIGGER trg_build_deleted
+    AFTER DELETE ON builds
+    FOR EACH ROW
+    INSERT INTO account_activity (user_id, activity_type, activity_message)
+    VALUES (
+               OLD.user_id,
+               'BUILD_DELETED',
+               CONCAT('Deleted build: ', OLD.build_name)
+           );
+
+CREATE TRIGGER trg_part_added
+    AFTER INSERT ON build_parts
+    FOR EACH ROW
+    INSERT INTO account_activity (user_id, activity_type, activity_message)
+    SELECT
+        b.user_id,
+        'PART_ADDED',
+        CONCAT('Added part: ', p.part_name, ' to ', b.build_name)
+    FROM builds b
+             JOIN parts p ON p.part_id = NEW.part_id
+    WHERE b.build_id = NEW.build_id;
+
+CREATE TRIGGER trg_part_removed
+    AFTER DELETE ON build_parts
+    FOR EACH ROW
+    INSERT INTO account_activity (user_id, activity_type, activity_message)
+    SELECT
+        b.user_id,
+        'PART_REMOVED',
+        CONCAT('Removed part: ', p.part_name, ' from ', b.build_name)
+    FROM builds b
+             JOIN parts p ON p.part_id = OLD.part_id
+    WHERE b.build_id = OLD.build_id;

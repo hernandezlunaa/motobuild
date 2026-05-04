@@ -1,14 +1,15 @@
 USE motobuild;
 
-INSERT INTO users (first_name, last_name, email, password_hash)
-VALUES
-    ('Test', 'User', 'test@motobuild.local', 'not_used_yet');
-
 INSERT INTO motorcycles (make, model, year, engine_cc, bike_type, image_url)
 VALUES
     ('Yamaha', 'YZF-R6', 2020, 600, 'Sport', 'r6.jpg'),
+    ('Kawasaki', 'Ninja ZX-10R', 2023, 998, 'Sport', 'ninja-zx10r.png'),
+    ('Honda', 'CBR600RR', 2021, 600, 'Sport', 'cbr600rr.jpg'),
     ('Kawasaki', 'Ninja 400', 2023, 400, 'Sport', 'ninja400.jpg'),
-    ('Honda', 'CBR600RR', 2021, 600, 'Sport', 'cbr600rr.jpg');
+    ('Yamaha', 'MT-07', 2023, 689, 'Naked', 'mt07.png'),
+    ('Kawasaki', 'Ninja 650', 2023, 649, 'Sport Touring', 'ninja650.png'),
+    ('Honda', 'Rebel 500', 2023, 471, 'Cruiser', 'rebel.png'),
+    ('Harley-Davidson', 'Street Glide', 2023, 1923, 'Touring', 'street-glide.png');
 
 INSERT INTO part_categories (category_name, description)
 VALUES
@@ -61,16 +62,10 @@ VALUES
     (8, 'Fender Eliminator Kit', 'TST Industries', 'TST-FE-01', 'Tidy tail fender eliminator kit', 119.99, 'Easy', 'fender-eliminator-kit-tst-industries.png'),
     (8, 'LED Headlight Bulbs', 'Cyclops', 'CYC-HEAD-01', 'Bright LED headlight bulb upgrade', 99.99, 'Easy', 'led-headlight-bulb-cyclops.png');
 
--- Test builds for the default test user
-INSERT INTO builds (user_id, motorcycle_id, build_name, description)
-VALUES
-    (1, 1, 'R6 Track Build', 'Starter track build for testing parts and compatibility.'),
-    (1, 2, 'Ninja 400 Street Build', 'Simple street build for testing multiple builds.');
-
 INSERT INTO build_parts (build_id, part_id, status, quantity, notes)
 VALUES
     (1, 1, 'planned', 1, 'Full exhaust planned for track setup.'),
-    (1, 5, 'planned', 1, 'Tune needed for exhaust setup.'),
+    (1, 5, 'planned', 1, 'Tune option selected for exhaust setup.'),
     (1, 9, 'installed', 1, 'Rearsets already installed.'),
     (1, 12, 'installed', 1, 'Tank grips already installed.'),
     (1, 17, 'planned', 1, 'Brake pad upgrade.'),
@@ -81,121 +76,72 @@ VALUES
     (2, 16, 'planned', 1, 'Crash protection.'),
     (2, 27, 'planned', 1, 'LED signal upgrade.');
 
--- Compatibility:
--- If a part is listed here for a motorcycle, the app can treat it as compatible.
--- If it is not listed, the app can warn the user that it may not fit.
-
--- Yamaha R6 compatibility
-INSERT INTO bike_part_compatibility (motorcycle_id, part_id, notes)
+INSERT INTO bike_part_incompatibility (motorcycle_id, part_id, reason)
 VALUES
-    (1, 1, 'Fits Yamaha R6.'),
-    (1, 2, 'Fits Yamaha R6.'),
-    (1, 3, 'Fits Yamaha R6.'),
-    (1, 4, 'Fits Yamaha R6.'),
-    (1, 5, 'Fits Yamaha R6.'),
-    (1, 6, 'Fits Yamaha R6.'),
-    (1, 7, 'Fits Yamaha R6.'),
-    (1, 8, 'Fits Yamaha R6.'),
-    (1, 9, 'Fits Yamaha R6.'),
-    (1, 10, 'Fits Yamaha R6.'),
-    (1, 11, 'Fits Yamaha R6.'),
-    (1, 12, 'Fits Yamaha R6.'),
-    (1, 13, 'Fits Yamaha R6.'),
-    (1, 14, 'Fits Yamaha R6.'),
-    (1, 15, 'Fits Yamaha R6.'),
-    (1, 16, 'Fits Yamaha R6.'),
-    (1, 17, 'Fits Yamaha R6.'),
-    (1, 18, 'Fits Yamaha R6.'),
-    (1, 19, 'Fits Yamaha R6.'),
-    (1, 20, 'Fits Yamaha R6.'),
-    (1, 21, 'Fits Yamaha R6.'),
-    (1, 22, 'Fits Yamaha R6.'),
-    (1, 23, 'Fits Yamaha R6.'),
-    (1, 24, 'Fits Yamaha R6.'),
-    (1, 25, 'Fits Yamaha R6.'),
-    (1, 26, 'Fits Yamaha R6.'),
-    (1, 27, 'Fits Yamaha R6.'),
-    (1, 28, 'Fits Yamaha R6.'),
-    (1, 29, 'Fits Yamaha R6.'),
-    (1, 30, 'Fits Yamaha R6.');
+-- Kawasaki Ninja 400
+(2, 1, 'The full titanium exhaust system is designed for larger supersport fitment and does not fit the Ninja 400.'),
+(2, 8, 'The auto blipper kit is not listed for this Ninja 400 setup.'),
+(2, 13, 'The race fairing kit is not made for the Ninja 400.'),
+(2, 14, 'The fairing stay is not made for the Ninja 400.'),
+(2, 20, 'The Brembo master cylinder setup is not recommended for this basic Ninja 400 configuration.'),
 
--- Kawasaki Ninja 400 compatibility
-INSERT INTO bike_part_compatibility (motorcycle_id, part_id, notes)
+-- Honda CBR600RR
+(3, 1, 'The full titanium exhaust system in this catalog is R6-specific and does not fit the CBR600RR.'),
+
+-- Yamaha MT-07
+(4, 1, 'The full titanium exhaust system in this catalog is R6-specific and does not fit the MT-07.'),
+(4, 8, 'The auto blipper kit is not listed for this MT-07 setup.'),
+(4, 13, 'The race fairing kit is not made for the MT-07.'),
+(4, 14, 'The fairing stay is not made for the MT-07.'),
+(4, 20, 'The Brembo master cylinder setup is not recommended for this MT-07 configuration.'),
+
+-- Kawasaki Ninja 650
+(5, 1, 'The full titanium exhaust system in this catalog is R6-specific and does not fit the Ninja 650.'),
+(5, 8, 'The auto blipper kit is not listed for this Ninja 650 setup.'),
+
+-- Honda Rebel 500
+(6, 1, 'The full titanium exhaust system in this catalog is R6-specific and does not fit the Rebel 500.'),
+(6, 7, 'The quickshifter is not listed for this Rebel 500 setup.'),
+(6, 8, 'The auto blipper kit is not listed for this Rebel 500 setup.'),
+(6, 9, 'Adjustable rearsets are not made for this Rebel 500 cruiser setup.'),
+(6, 10, 'Clip-on handlebars are not appropriate for this Rebel 500 cruiser setup.'),
+(6, 13, 'Race fairing kit is not made for the Rebel 500.'),
+(6, 14, 'Fairing stay is not made for the Rebel 500.'),
+(6, 15, 'Double bubble sport windscreen is not made for the Rebel 500.'),
+(6, 20, 'The Brembo master cylinder setup is not recommended for this Rebel 500 configuration.'),
+(6, 22, 'Fork cartridge kit is not listed for this Rebel 500 setup.'),
+
+-- Harley-Davidson Street Glide
+(7, 1, 'The full titanium exhaust system in this catalog is R6-specific and does not fit the Street Glide.'),
+(7, 7, 'The quickshifter is not listed for this Street Glide touring setup.'),
+(7, 8, 'The auto blipper kit is not listed for this Street Glide touring setup.'),
+(7, 9, 'Adjustable rearsets are not made for this Street Glide touring setup.'),
+(7, 10, 'Clip-on handlebars are not appropriate for this Street Glide touring setup.'),
+(7, 13, 'Race fairing kit is not made for the Street Glide.'),
+(7, 14, 'Fairing stay is not made for the Street Glide.'),
+(7, 15, 'Double bubble sport windscreen is not made for the Street Glide.'),
+(7, 24, '520 chain conversion kit does not apply to this Street Glide touring setup.'),
+(7, 25, 'Aluminum rear sprocket does not apply to this Street Glide touring setup.'),
+
+-- Kawasaki Ninja ZX-10R
+(8, 1, 'The full titanium exhaust system in this catalog is R6-specific and does not fit the Ninja ZX-10R.'),
+(8, 2, 'The slip-on exhaust in this catalog is not listed for the Ninja ZX-10R.'),
+(8, 4, 'The mid pipe link in this catalog is not listed for the Ninja ZX-10R.');
+
+INSERT INTO part_dependencies (part_id, required_part_id, dependency_group, notes)
 VALUES
-    (2, 2, 'Fits Ninja 400.'),
-    (2, 3, 'Universal exhaust accessory.'),
-    (2, 5, 'Tune option for Ninja 400.'),
-    (2, 6, 'Fuel controller option.'),
-    (2, 7, 'Quickshifter option.'),
-    (2, 9, 'Rearset option.'),
-    (2, 10, 'Clip-on option.'),
-    (2, 11, 'Lever option.'),
-    (2, 12, 'Universal tank grip style part.'),
-    (2, 15, 'Windscreen option.'),
-    (2, 16, 'Frame slider option.'),
-    (2, 17, 'Brake pad option.'),
-    (2, 18, 'Brake line option.'),
-    (2, 19, 'Brake rotor option.'),
-    (2, 21, 'Rear shock option.'),
-    (2, 22, 'Fork upgrade option.'),
-    (2, 23, 'Steering damper option.'),
-    (2, 24, 'Chain conversion option.'),
-    (2, 25, 'Rear sprocket option.'),
-    (2, 26, 'Clutch kit option.'),
-    (2, 27, 'LED signal option.'),
-    (2, 28, 'Integrated tail light option.'),
-    (2, 29, 'Fender eliminator option.'),
-    (2, 30, 'LED headlight option.');
+    (1, 5, 'fuel_tuning', 'Full exhaust needs at least one fuel tuning option.'),
+    (1, 6, 'fuel_tuning', 'Full exhaust needs at least one fuel tuning option.'),
 
--- Honda CBR600RR compatibility
-INSERT INTO bike_part_compatibility (motorcycle_id, part_id, notes)
-VALUES
-    (3, 2, 'Fits CBR600RR.'),
-    (3, 3, 'Universal exhaust accessory.'),
-    (3, 5, 'Tune option for CBR600RR.'),
-    (3, 6, 'Fuel controller option.'),
-    (3, 7, 'Quickshifter option.'),
-    (3, 8, 'Auto blipper option.'),
-    (3, 9, 'Rearset option.'),
-    (3, 10, 'Clip-on option.'),
-    (3, 11, 'Lever option.'),
-    (3, 12, 'Universal tank grip style part.'),
-    (3, 13, 'Race fairing option.'),
-    (3, 14, 'Fairing stay option.'),
-    (3, 15, 'Windscreen option.'),
-    (3, 16, 'Frame slider option.'),
-    (3, 17, 'Brake pad option.'),
-    (3, 18, 'Brake line option.'),
-    (3, 19, 'Brake rotor option.'),
-    (3, 20, 'Master cylinder option.'),
-    (3, 21, 'Rear shock option.'),
-    (3, 22, 'Fork upgrade option.'),
-    (3, 23, 'Steering damper option.'),
-    (3, 24, 'Chain conversion option.'),
-    (3, 25, 'Rear sprocket option.'),
-    (3, 26, 'Clutch kit option.'),
-    (3, 27, 'LED signal option.'),
-    (3, 28, 'Integrated tail light option.'),
-    (3, 29, 'Fender eliminator option.'),
-    (3, 30, 'LED headlight option.');
+    (7, 5, 'quickshifter_tuning', 'Quickshifter requires ECU tuning support.'),
+    (8, 5, 'blipper_tuning', 'Auto blipper requires ECU tuning support.'),
+    (13, 14, 'fairing_mounting', 'Race fairing kit requires a fairing stay for mounting.'),
+    (20, 18, 'brake_line_upgrade', 'Upgraded master cylinder works best with steel braided brake lines.');
 
--- Dependencies:
--- part_id = the part being added
--- required_part_id = the part it needs/recommends
-INSERT INTO part_dependencies (part_id, required_part_id, notes)
-VALUES
-    (1, 5, 'Full exhaust is recommended with an ECU flash tune.'),
-    (1, 6, 'Full exhaust can also use a fuel controller.'),
-    (7, 5, 'Quickshifter requires ECU tuning support.'),
-    (8, 5, 'Auto blipper requires ECU tuning support.'),
-    (13, 14, 'Race fairing kit requires a fairing stay for mounting.'),
-    (20, 18, 'Upgraded master cylinder works best with steel braided brake lines.');
-
--- Conflicts:
--- These are entered in both directions to make querying easier.
 INSERT INTO part_conflicts (part_id, conflicting_part_id, notes)
 VALUES
     (1, 2, 'A full exhaust system replaces the slip-on exhaust setup.'),
     (2, 1, 'A slip-on exhaust cannot be used with a full exhaust system.'),
+
     (27, 28, 'Separate LED turn signals conflict with an integrated tail light.'),
     (28, 27, 'Integrated tail light already includes turn signal functionality.');
