@@ -18,5 +18,4 @@ public class PartCategory {
 
     @Column(name = "description")
     private String description;
-
 }

@@ -2,6 +2,7 @@ package com.motobuild.controller;
 
 import com.motobuild.model.Build;
 import com.motobuild.repository.MotorcycleRepository;
+import com.motobuild.service.AuthService;
 import com.motobuild.service.BuildService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -18,18 +19,31 @@ public class BuildController {
 
     private final BuildService buildService;
     private final MotorcycleRepository motorcycleRepository;
+    private final AuthService authService;
 
     public BuildController(BuildService buildService,
-                           MotorcycleRepository motorcycleRepository) {
+                           MotorcycleRepository motorcycleRepository,
+                           AuthService authService) {
         this.buildService = buildService;
         this.motorcycleRepository = motorcycleRepository;
+        this.authService = authService;
     }
 
     @GetMapping("/builds")
-    public String showBuilds(@RequestParam(required = false) Integer motorcycleId, Model model) {
-        model.addAttribute("builds", buildService.getBuildsForDefaultUser());
+    public String showBuilds(@RequestParam(required = false) Integer motorcycleId,
+                             HttpSession session,
+                             Model model) {
+        Integer userId = authService.getLoggedInUserId(session);
+
+        if (userId == null) {
+            return "redirect:/login";
+        }
+
+        model.addAttribute("builds", buildService.getBuildsForUser(userId));
         model.addAttribute("motorcycles", motorcycleRepository.findAll());
         model.addAttribute("selectedMotorcycleId", motorcycleId);
+        model.addAttribute("loggedInUser", authService.getLoggedInUser(session));
+
         return "builds";
     }
 
@@ -37,19 +51,37 @@ public class BuildController {
     public String createBuild(@RequestParam String buildName,
                               @RequestParam Integer motorcycleId,
                               @RequestParam(required = false) String description,
+                              HttpSession session,
                               RedirectAttributes redirectAttributes) {
-        Build build = buildService.createBuild(buildName, motorcycleId, description);
+        Integer userId = authService.getLoggedInUserId(session);
+
+        if (userId == null) {
+            return "redirect:/login";
+        }
+
+        Build build = buildService.createBuild(userId, buildName, motorcycleId, description);
         redirectAttributes.addFlashAttribute("successMessage", "Build created successfully.");
+
         return "redirect:/builds/" + build.getBuildId();
     }
 
     @GetMapping("/builds/{buildId}")
-    public String showBuildDetails(@PathVariable Integer buildId, Model model) {
-        Build build = buildService.getBuild(buildId);
+    public String showBuildDetails(@PathVariable Integer buildId,
+                                   HttpSession session,
+                                   Model model) {
+        Integer userId = authService.getLoggedInUserId(session);
+
+        if (userId == null) {
+            return "redirect:/login";
+        }
+
+        Build build = buildService.getBuild(buildId, userId);
 
         model.addAttribute("build", build);
         model.addAttribute("totalCost", buildService.calculateTotalCost(build));
-        model.addAttribute("warnings", buildService.getWarnings(buildId));
+        model.addAttribute("cartCost", buildService.calculateCartCost(build));
+        model.addAttribute("warnings", buildService.getWarnings(buildId, userId));
+        model.addAttribute("loggedInUser", authService.getLoggedInUser(session));
 
         return "build-details";
     }
@@ -57,18 +89,34 @@ public class BuildController {
     @PostMapping("/builds/{buildId}/update-name")
     public String updateBuildName(@PathVariable Integer buildId,
                                   @RequestParam String buildName,
+                                  HttpSession session,
                                   RedirectAttributes redirectAttributes) {
-        buildService.updateBuildName(buildId, buildName);
+        Integer userId = authService.getLoggedInUserId(session);
+
+        if (userId == null) {
+            return "redirect:/login";
+        }
+
+        buildService.updateBuildName(userId, buildId, buildName);
         redirectAttributes.addFlashAttribute("successMessage", "Build name updated.");
+
         return "redirect:/builds";
     }
 
     @PostMapping("/builds/{buildId}/update-motorcycle")
     public String updateBuildMotorcycle(@PathVariable Integer buildId,
                                         @RequestParam Integer motorcycleId,
+                                        HttpSession session,
                                         RedirectAttributes redirectAttributes) {
-        buildService.updateBuildMotorcycle(buildId, motorcycleId);
+        Integer userId = authService.getLoggedInUserId(session);
+
+        if (userId == null) {
+            return "redirect:/login";
+        }
+
+        buildService.updateBuildMotorcycle(userId, buildId, motorcycleId);
         redirectAttributes.addFlashAttribute("successMessage", "Build motorcycle updated.");
+
         return "redirect:/builds";
     }
 
@@ -76,8 +124,13 @@ public class BuildController {
     public String deleteBuild(@PathVariable Integer buildId,
                               HttpSession session,
                               RedirectAttributes redirectAttributes) {
-        BuildService.DeletedBuildSnapshot deletedBuild = buildService.deleteBuild(buildId);
+        Integer userId = authService.getLoggedInUserId(session);
 
+        if (userId == null) {
+            return "redirect:/login";
+        }
+
+        BuildService.DeletedBuildSnapshot deletedBuild = buildService.deleteBuild(userId, buildId);
         session.setAttribute("lastDeletedBuild", deletedBuild);
 
         redirectAttributes.addFlashAttribute(
@@ -91,6 +144,12 @@ public class BuildController {
     @PostMapping("/builds/undo-delete")
     public String undoDeleteBuild(HttpSession session,
                                   RedirectAttributes redirectAttributes) {
+        Integer userId = authService.getLoggedInUserId(session);
+
+        if (userId == null) {
+            return "redirect:/login";
+        }
+
         BuildService.DeletedBuildSnapshot deletedBuild =
                 (BuildService.DeletedBuildSnapshot) session.getAttribute("lastDeletedBuild");
 
@@ -99,7 +158,7 @@ public class BuildController {
             return "redirect:/builds";
         }
 
-        Build restoredBuild = buildService.restoreDeletedBuild(deletedBuild);
+        Build restoredBuild = buildService.restoreDeletedBuild(userId, deletedBuild);
         session.removeAttribute("lastDeletedBuild");
 
         redirectAttributes.addFlashAttribute(
@@ -114,8 +173,15 @@ public class BuildController {
     public String addPartToBuild(@PathVariable Integer buildId,
                                  @PathVariable Integer partId,
                                  HttpServletRequest request,
+                                 HttpSession session,
                                  RedirectAttributes redirectAttributes) {
-        String partName = buildService.addPartToBuild(buildId, partId);
+        Integer userId = authService.getLoggedInUserId(session);
+
+        if (userId == null) {
+            return "redirect:/login";
+        }
+
+        String partName = buildService.addPartToBuild(userId, buildId, partId);
 
         redirectAttributes.addFlashAttribute(
                 "successMessage",
@@ -136,9 +202,17 @@ public class BuildController {
     public String updateStatus(@PathVariable Integer buildId,
                                @PathVariable Integer buildPartId,
                                @RequestParam String status,
+                               HttpSession session,
                                RedirectAttributes redirectAttributes) {
-        buildService.updateBuildPartStatus(buildId, buildPartId, status);
+        Integer userId = authService.getLoggedInUserId(session);
+
+        if (userId == null) {
+            return "redirect:/login";
+        }
+
+        buildService.updateBuildPartStatus(userId, buildId, buildPartId, status);
         redirectAttributes.addFlashAttribute("successMessage", "Part status updated.");
+
         return "redirect:/builds/" + buildId;
     }
 
@@ -147,8 +221,15 @@ public class BuildController {
                              @PathVariable Integer buildPartId,
                              @RequestParam(required = false) Integer redirectPartId,
                              HttpServletRequest request,
+                             HttpSession session,
                              RedirectAttributes redirectAttributes) {
-        String partName = buildService.removePartFromBuild(buildId, buildPartId);
+        Integer userId = authService.getLoggedInUserId(session);
+
+        if (userId == null) {
+            return "redirect:/login";
+        }
+
+        String partName = buildService.removePartFromBuild(userId, buildId, buildPartId);
 
         redirectAttributes.addFlashAttribute(
                 "successMessage",

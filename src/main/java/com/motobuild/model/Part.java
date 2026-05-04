@@ -39,5 +39,4 @@ public class Part {
 
     @Column(name = "image_url")
     private String imageUrl;
-
 }

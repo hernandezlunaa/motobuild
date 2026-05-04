@@ -14,15 +14,13 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import java.io.Serializable;
 
 @Service
 public class BuildService {
-
-    private static final String DEFAULT_USER_EMAIL = "test@motobuild.local";
 
     private final BuildRepository buildRepository;
     private final BuildPartRepository buildPartRepository;
@@ -176,31 +174,29 @@ public class BuildService {
         }
     }
 
-    public User getDefaultUser() {
-        return userRepository.findByEmail(DEFAULT_USER_EMAIL)
-                .orElseGet(() -> {
-                    User user = new User();
-                    user.setFirstName("Test");
-                    user.setLastName("User");
-                    user.setEmail(DEFAULT_USER_EMAIL);
-                    user.setPasswordHash("not_used_yet");
-                    return userRepository.save(user);
-                });
+    public User getUser(Integer userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found."));
     }
 
-    public List<Build> getBuildsForDefaultUser() {
-        User user = getDefaultUser();
-        return buildRepository.findBuildsForUserWithDetails(user.getUserId());
+    public List<Build> getBuildsForUser(Integer userId) {
+        return buildRepository.findBuildsForUserWithDetails(userId);
     }
 
-    public Build getBuild(Integer buildId) {
-        return buildRepository.findBuildWithDetails(buildId)
+    public Build getBuild(Integer buildId, Integer userId) {
+        Build build = buildRepository.findBuildWithDetails(buildId)
                 .orElseThrow(() -> new RuntimeException("Build not found."));
+
+        if (!build.getUser().getUserId().equals(userId)) {
+            throw new RuntimeException("You do not have permission to view this build.");
+        }
+
+        return build;
     }
 
     @Transactional
-    public Build createBuild(String buildName, Integer motorcycleId, String description) {
-        User user = getDefaultUser();
+    public Build createBuild(Integer userId, String buildName, Integer motorcycleId, String description) {
+        User user = getUser(userId);
 
         Motorcycle motorcycle = motorcycleRepository.findById(motorcycleId)
                 .orElseThrow(() -> new RuntimeException("Motorcycle not found."));
@@ -215,8 +211,8 @@ public class BuildService {
     }
 
     @Transactional
-    public String addPartToBuild(Integer buildId, Integer partId) {
-        Build build = getBuild(buildId);
+    public String addPartToBuild(Integer userId, Integer buildId, Integer partId) {
+        Build build = getBuild(buildId, userId);
 
         Part part = partRepository.findById(partId)
                 .orElseThrow(() -> new RuntimeException("Part not found."));
@@ -243,7 +239,9 @@ public class BuildService {
     }
 
     @Transactional
-    public void updateBuildPartStatus(Integer buildId, Integer buildPartId, String status) {
+    public void updateBuildPartStatus(Integer userId, Integer buildId, Integer buildPartId, String status) {
+        getBuild(buildId, userId);
+
         BuildPart buildPart = buildPartRepository.findById(buildPartId)
                 .orElseThrow(() -> new RuntimeException("Build part not found."));
 
@@ -260,7 +258,9 @@ public class BuildService {
     }
 
     @Transactional
-    public String removePartFromBuild(Integer buildId, Integer buildPartId) {
+    public String removePartFromBuild(Integer userId, Integer buildId, Integer buildPartId) {
+        getBuild(buildId, userId);
+
         List<String> partNames = jdbcTemplate.queryForList(
                 """
                 SELECT p.part_name
@@ -309,8 +309,20 @@ public class BuildService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    public List<BuildWarning> getWarnings(Integer buildId) {
-        Build build = getBuild(buildId);
+    public BigDecimal calculateCartCost(Build build) {
+        if (build.getBuildParts() == null) {
+            return BigDecimal.ZERO;
+        }
+
+        return build.getBuildParts()
+                .stream()
+                .filter(buildPart -> "planned".equals(buildPart.getStatus()))
+                .map(BuildPart::getLineTotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    public List<BuildWarning> getWarnings(Integer buildId, Integer userId) {
+        Build build = getBuild(buildId, userId);
         List<BuildWarning> warnings = new ArrayList<>();
 
         if (build.getBuildParts() == null || build.getBuildParts().isEmpty()) {
@@ -452,29 +464,47 @@ public class BuildService {
     }
 
     @Transactional
-    public void updateBuildName(Integer buildId, String buildName) {
-        Build build = buildRepository.findById(buildId)
-                .orElseThrow(() -> new RuntimeException("Build not found."));
+    public void updateBuildName(Integer userId, Integer buildId, String buildName) {
+        Build build = getBuild(buildId, userId);
 
-        build.setBuildName(buildName);
+        String oldName = build.getBuildName();
+        String newName = buildName.trim();
+
+        build.setBuildName(newName);
         buildRepository.save(build);
+
+        logAccountActivity(
+                userId,
+                "BUILD_RENAMED",
+                "Renamed build from " + oldName + " to " + newName
+        );
     }
 
     @Transactional
-    public void updateBuildMotorcycle(Integer buildId, Integer motorcycleId) {
-        Build build = buildRepository.findById(buildId)
-                .orElseThrow(() -> new RuntimeException("Build not found."));
+    public void updateBuildMotorcycle(Integer userId, Integer buildId, Integer motorcycleId) {
+        Build build = getBuild(buildId, userId);
 
-        Motorcycle motorcycle = motorcycleRepository.findById(motorcycleId)
+        Motorcycle oldMotorcycle = build.getMotorcycle();
+
+        Motorcycle newMotorcycle = motorcycleRepository.findById(motorcycleId)
                 .orElseThrow(() -> new RuntimeException("Motorcycle not found."));
 
-        build.setMotorcycle(motorcycle);
+        build.setMotorcycle(newMotorcycle);
         buildRepository.save(build);
+
+        String oldBikeName = oldMotorcycle.getYear() + " " + oldMotorcycle.getMake() + " " + oldMotorcycle.getModel();
+        String newBikeName = newMotorcycle.getYear() + " " + newMotorcycle.getMake() + " " + newMotorcycle.getModel();
+
+        logAccountActivity(
+                userId,
+                "BUILD_BIKE_CHANGED",
+                "Changed " + build.getBuildName() + " from " + oldBikeName + " to " + newBikeName
+        );
     }
 
     @Transactional
-    public DeletedBuildSnapshot deleteBuild(Integer buildId) {
-        Build build = getBuild(buildId);
+    public DeletedBuildSnapshot deleteBuild(Integer userId, Integer buildId) {
+        Build build = getBuild(buildId, userId);
 
         List<DeletedBuildPartSnapshot> partSnapshots = new ArrayList<>();
 
@@ -499,12 +529,25 @@ public class BuildService {
 
         buildRepository.delete(build);
 
+        jdbcTemplate.update(
+                """
+                DELETE aa
+                FROM account_activity aa
+                WHERE aa.user_id = ?
+                AND aa.created_at >= DATE_SUB(NOW(), INTERVAL 1 SECOND)
+                AND aa.activity_type = 'PART_REMOVED'
+                AND aa.activity_message LIKE ?
+                """,
+                userId,
+                "% from " + snapshot.getBuildName()
+        );
+
         return snapshot;
     }
 
     @Transactional
-    public Build restoreDeletedBuild(DeletedBuildSnapshot snapshot) {
-        User user = getDefaultUser();
+    public Build restoreDeletedBuild(Integer userId, DeletedBuildSnapshot snapshot) {
+        User user = getUser(userId);
 
         Motorcycle motorcycle = motorcycleRepository.findById(snapshot.getMotorcycleId())
                 .orElseThrow(() -> new RuntimeException("Motorcycle not found."));
@@ -536,6 +579,35 @@ public class BuildService {
             buildPartRepository.save(buildPart);
         }
 
+        jdbcTemplate.update(
+                """
+                DELETE aa
+                FROM account_activity aa
+                WHERE aa.user_id = ?
+                AND aa.created_at >= DATE_SUB(NOW(), INTERVAL 1 SECOND)
+                AND aa.activity_type IN ('BUILD_CREATED', 'PART_ADDED')
+                """,
+                userId
+        );
+
+        logAccountActivity(
+                userId,
+                "BUILD_RESTORED",
+                "Restored deleted build: " + savedBuild.getBuildName()
+        );
+
         return savedBuild;
+    }
+
+    private void logAccountActivity(Integer userId, String activityType, String activityMessage) {
+        jdbcTemplate.update(
+                """
+                INSERT INTO account_activity (user_id, activity_type, activity_message)
+                VALUES (?, ?, ?)
+                """,
+                userId,
+                activityType,
+                activityMessage
+        );
     }
 }

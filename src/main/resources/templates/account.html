@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" data-bs-theme="light">
+<head>
+    <title>Account - MotoBuild</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/motobuild-theme.css?v=2">
+
+    <style>
+        .account-card,
+        .stats-card,
+        .activity-card,
+        .delete-card,
+        .settings-card {
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .activity-card {
+            min-height: 720px;
+        }
+
+        .delete-account-box {
+            border: 1px solid rgba(220, 53, 69, 0.35);
+            border-radius: 14px;
+            padding: 18px;
+        }
+
+        .activity-item {
+            border-bottom: 1px solid rgba(128, 128, 128, 0.2);
+            padding: 12px 0;
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+
+        .delete-account-btn.confirm-delete {
+            background-color: #dc3545 !important;
+            border-color: #dc3545 !important;
+            color: white !important;
+        }
+
+        .flash-message {
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+
+        .flash-message.fade-out {
+            opacity: 0;
+            transform: translateY(-8px);
+        }
+
+        .theme-toggle-btn {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            width: 54px;
+            height: 54px;
+            border-radius: 50%;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            z-index: 9999;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.25s ease;
+        }
+
+        .theme-toggle-btn:hover {
+            transform: scale(1.08) rotate(8deg);
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+        }
+
+        .theme-toggle-icon {
+            width: 30px;
+            height: 30px;
+            object-fit: contain;
+        }
+
+        .theme-icon-animate {
+            animation: themeIconSpin 0.35s ease;
+        }
+
+        @keyframes themeIconSpin {
+            0% {
+                opacity: 0;
+                transform: rotate(-120deg) scale(0.5);
+            }
+
+            100% {
+                opacity: 1;
+                transform: rotate(0deg) scale(1);
+            }
+        }
+
+        .activity-card {
+            height: 1880px;
+            min-height: calc(100vh - 150px);
+        }
+
+        .activity-card .card-body {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .activity-list {
+            flex-grow: 1;
+            overflow-y: auto;
+            min-height: 0;
+            padding-right: 8px;
+        }
+    </style>
+</head>
+
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand fw-bold" href="/">MotoBuild</a>
+
+        <div class="d-flex gap-2">
+            <a class="btn btn-outline-light btn-sm" href="/motorcycles">Motorcycles</a>
+            <a class="btn btn-outline-light btn-sm" href="/parts">Parts</a>
+            <a class="btn btn-outline-light btn-sm" href="/builds">Builds</a>
+            <a class="btn btn-light btn-sm" href="/account">Account</a>
+            <a class="btn btn-outline-light btn-sm" href="/logout">Logout</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-5 mb-5">
+
+    <div th:if="${successMessage}"
+         id="successFlashMessage"
+         class="alert alert-success shadow-sm flash-message"
+         th:text="${successMessage}">
+    </div>
+
+    <div th:if="${errorMessage}"
+         id="errorFlashMessage"
+         class="alert alert-danger shadow-sm flash-message"
+         th:text="${errorMessage}">
+    </div>
+
+    <div class="row g-4 align-items-start">
+
+        <!-- LEFT SIDE -->
+        <div class="col-lg-5 d-flex flex-column gap-4">
+
+            <!-- ACCOUNT INFO -->
+            <div class="card account-card shadow-sm">
+                <div class="card-body p-4">
+                    <h1 class="fw-bold motobuild-title">Account</h1>
+                    <p class="text-body-secondary mb-4">
+                        Manage your MotoBuild account.
+                    </p>
+
+                    <h5 class="fw-bold">Account Info</h5>
+
+                    <p class="mb-1">
+                        <strong>Name:</strong>
+                        <span th:text="${loggedInUser.firstName}"></span>
+                        <span th:text="${loggedInUser.lastName}"></span>
+                    </p>
+
+                    <p class="mb-1">
+                        <strong>Email:</strong>
+                        <span th:text="${loggedInUser.email}"></span>
+                    </p>
+
+                    <p class="mb-0">
+                        <strong>Account Created:</strong>
+                        <span th:text="${#temporals.format(loggedInUser.createdAt, 'MMM dd, yyyy h:mm a')}"></span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- MOTOBUILD STATS -->
+            <div class="card stats-card shadow-sm">
+                <div class="card-body p-4">
+                    <h4 class="fw-bold motobuild-title">MotoBuild Stats</h4>
+
+                    <div class="row g-3 mt-1">
+                        <div class="col-6">
+                            <p class="text-body-secondary mb-0">Builds</p>
+                            <h3 class="fw-bold" th:text="${accountStats.totalBuilds}"></h3>
+                        </div>
+
+                        <div class="col-6">
+                            <p class="text-body-secondary mb-0">Parts Added</p>
+                            <h3 class="fw-bold" th:text="${accountStats.totalParts}"></h3>
+                        </div>
+
+                        <div class="col-6">
+                            <p class="text-body-secondary mb-0">Planned Parts</p>
+                            <h3 class="fw-bold" th:text="${accountStats.plannedParts}"></h3>
+                        </div>
+
+                        <div class="col-6">
+                            <p class="text-body-secondary mb-0">Installed Parts</p>
+                            <h3 class="fw-bold" th:text="${accountStats.installedParts}"></h3>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <p class="mb-1">
+                        <strong>Total Build Value:</strong>
+                        $<span th:text="${#numbers.formatDecimal(accountStats.totalBuildValue, 1, 2)}"></span>
+                    </p>
+
+                    <p class="mb-1">
+                        <strong>Cart Value:</strong>
+                        $<span th:text="${#numbers.formatDecimal(accountStats.cartValue, 1, 2)}"></span>
+                    </p>
+
+                    <p class="mb-0">
+                        <strong>Most Recent Build:</strong>
+                        <span th:text="${accountStats.mostRecentBuild}"></span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- PROFILE SETTINGS -->
+            <div class="card settings-card shadow-sm">
+                <div class="card-body p-4">
+                    <h4 class="fw-bold motobuild-title">Profile Settings</h4>
+                    <p class="text-body-secondary">
+                        Update your name or email. Your current password is required.
+                    </p>
+
+                    <form method="post" action="/account/update-profile">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">First Name</label>
+                                <input type="text"
+                                       name="firstName"
+                                       class="form-control"
+                                       th:value="${loggedInUser.firstName}"
+                                       required>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Last Name</label>
+                                <input type="text"
+                                       name="lastName"
+                                       class="form-control"
+                                       th:value="${loggedInUser.lastName}"
+                                       required>
+                            </div>
+                        </div>
+
+                        <div class="mt-3">
+                            <label class="form-label">Email</label>
+                            <input type="email"
+                                   name="email"
+                                   class="form-control"
+                                   th:value="${loggedInUser.email}"
+                                   required>
+                        </div>
+
+                        <div class="mt-3">
+                            <label class="form-label">Current Password</label>
+                            <input type="password"
+                                   name="currentPassword"
+                                   class="form-control"
+                                   required>
+                        </div>
+
+                        <button type="submit" class="btn btn-motobuild-purple w-100 mt-3">
+                            Save Profile
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- PASSWORD SETTINGS -->
+            <div class="card settings-card shadow-sm">
+                <div class="card-body p-4">
+                    <h4 class="fw-bold motobuild-title">Password Settings</h4>
+                    <p class="text-body-secondary">
+                        Change your password using your current password.
+                    </p>
+
+                    <form method="post" action="/account/change-password">
+                        <div class="mb-3">
+                            <label class="form-label">Current Password</label>
+                            <input type="password"
+                                   name="currentPassword"
+                                   class="form-control"
+                                   required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">New Password</label>
+                            <input type="password"
+                                   name="newPassword"
+                                   class="form-control"
+                                   required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Confirm New Password</label>
+                            <input type="password"
+                                   name="confirmNewPassword"
+                                   class="form-control"
+                                   required>
+                        </div>
+
+                        <button type="submit" class="btn btn-motobuild-purple w-100">
+                            Change Password
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- DELETE ACCOUNT -->
+            <div class="card delete-card shadow-sm mt-auto">
+                <div class="card-body p-4">
+                    <div class="delete-account-box">
+                        <h5 class="fw-bold text-danger">Delete Account</h5>
+
+                        <p class="text-body-secondary">
+                            Deleting your account will remove your account and all builds connected to it.
+                            This cannot be undone.
+                        </p>
+
+                        <form method="post" action="/account/delete" id="deleteAccountForm">
+                            <div class="mb-3">
+                                <label class="form-label">Enter your password to confirm</label>
+                                <input type="password"
+                                       name="password"
+                                       class="form-control"
+                                       required>
+                            </div>
+
+                            <button type="submit"
+                                    class="btn btn-outline-danger delete-account-btn">
+                                Delete Account
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+      <!-- RIGHT SIDE -->
+      <div class="col-lg-7">
+        <div class="card activity-card shadow-sm">
+          <div class="card-body p-4">
+            <h3 class="fw-bold motobuild-title">Recent Activity</h3>
+            <p class="text-body-secondary">
+              This activity is recorded automatically using SQL triggers.
+            </p>
+
+            <div th:if="${#lists.isEmpty(recentActivity)}" class="alert alert-info">
+              No recent activity yet.
+            </div>
+
+            <div class="activity-list">
+              <div th:each="activity : ${recentActivity}" class="activity-item">
+                <div class="d-flex justify-content-between gap-3 flex-wrap">
+                  <div>
+                            <span class="badge text-bg-secondary me-2"
+                                  th:text="${activity.activityType}">
+                            </span>
+
+                    <span th:text="${activity.activityMessage}"></span>
+                  </div>
+
+                  <small class="text-body-secondary"
+                         th:text="${#temporals.format(activity.createdAt, 'MMM dd, h:mm a')}">
+                  </small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+</div>
+
+<button id="themeToggle" class="theme-toggle-btn" type="button">
+    <img id="themeIcon" class="theme-toggle-icon" src="/images/ui/moon.png" alt="Switch theme">
+</button>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const deleteButton = document.querySelector(".delete-account-btn");
+
+        if (deleteButton) {
+            deleteButton.addEventListener("click", (event) => {
+                if (!deleteButton.classList.contains("confirm-delete")) {
+                    event.preventDefault();
+
+                    deleteButton.classList.add("confirm-delete");
+                    deleteButton.textContent = "Are you sure? Click again";
+
+                    setTimeout(() => {
+                        deleteButton.classList.remove("confirm-delete");
+                        deleteButton.textContent = "Delete Account";
+                    }, 4000);
+                }
+            });
+        }
+
+        const successFlashMessage = document.getElementById("successFlashMessage");
+        const errorFlashMessage = document.getElementById("errorFlashMessage");
+
+        if (successFlashMessage) {
+            setTimeout(() => {
+                successFlashMessage.classList.add("fade-out");
+
+                setTimeout(() => {
+                    successFlashMessage.remove();
+                }, 600);
+            }, 3000);
+        }
+
+        if (errorFlashMessage) {
+            setTimeout(() => {
+                errorFlashMessage.classList.add("fade-out");
+
+                setTimeout(() => {
+                    errorFlashMessage.remove();
+                }, 600);
+            }, 5000);
+        }
+    });
+</script>
+
+<script src="/js/theme.js?v=2"></script>
+</body>
+</html>
